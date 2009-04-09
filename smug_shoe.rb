@@ -105,10 +105,5 @@ Shoes.app :title => 'Smug Shooe', :width => 1050, :radius => 12 do
       end
     end # pic click
   end
-  
-  def pick_size( )
-    
-  end
-  
 end
  
