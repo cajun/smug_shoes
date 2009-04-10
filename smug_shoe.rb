@@ -11,7 +11,7 @@ Shoes.app :title => 'Smug Shooe', :width => 1050, :radius => 12 do
   background gradient slategray, gray
   stroke white
   para 'Enter NickName ( e.g. kleinpeter )'
-  @nick = edit_line :text => 'kleinpeter'
+  @nick = edit_line :text => 'vincentlaforet'
   
   
   button 'get albums' do
@@ -40,9 +40,9 @@ Shoes.app :title => 'Smug Shooe', :width => 1050, :radius => 12 do
     @photos.clear
     @photos.append do
       stack do
-        background white, :curve => 10, :margin => 10, :margin_right => 10 + gutter, :center => true
+        background white, :curve => 10, :margin => 10, :margin_right => 10 + gutter
         title album.title, :align => 'center'
-        subtitle album.description, :align => 'center'
+        caption album.description, :align => 'center'
         inscription "Pic Count: #{album.image_count}", :align => 'center'
       end
       
@@ -56,7 +56,7 @@ Shoes.app :title => 'Smug Shooe', :width => 1050, :radius => 12 do
   def display_photos( album )
     flow :margin => 5 do
       album.photos.each do |photo|
-        pic = image photo.thumb_url, :margin => 3, :center => true
+        pic = show_image photo.thumb_url, :margin => 3, :center => true
 
         pic.click do |button, left, top|
           pic_dialog( album, photo )
@@ -65,43 +65,78 @@ Shoes.app :title => 'Smug Shooe', :width => 1050, :radius => 12 do
     end
   end
   
+  def show_image( photo_url, options )
+    if( photo_url )
+      image photo_url, options
+    else
+      para "No Image"
+    end
+  end
+  
   def pic_dialog( album, photo )
-    dialog :title => album.title do
+    @details = window :title => album.title do
       background gradient slategray, gray
-      stack :margin => 5, :center => true do
+      stack :margin => 5, :margin_right => gutter + 5 do
         background white, :curve => 10, :center => true
         para( link( album.title ), :align => 'center' ).click{ system( photo.album_url ) }
         para "Last Updated: #{photo.last_updated}", :align => 'center'
         para "Caption: #{photo.caption}", :align => 'center'
       end # dialog
       
-      flow :margin => 5, :center => true do
-        background white, :curve => 10, :center => true
-        caption link( 'Thumb', :click => Proc.new do
-            @box.clear
-            @box.append{ image photo.thumb_url, :center => true }
+      flow :margin => 5, :margin_right => gutter + 5 do
+        background white, :curve => 10, :center => true, :margin_right => gutter
+        %w( thumb small medium large x_large x2_large x3_large original ).each do |p|
+          url = photo.send( "#{p}_url" )
+          if( url )
+            caption link( p, :click => Proc.new do
+                @box.clear
+                @box.append do
+                  background white, :curve => 10, :center => true
+                  image url, :margin => 5, :center => true
+                end
+              end
+            )
           end
-        )
-        caption link( 'Small', :click => Proc.new do
-            @box.clear
-            @box.append{ image photo.small_url, :center => true }
+        end
+        
+        %w( video320 video640 video960 video1280 ).each do |p|
+          url = photo.send( "#{p}_url" )
+          if( url )
+            caption link( p, :click => Proc.new do
+                @box.clear
+                @box.append do
+                  background white, :curve => 10
+                  stack :margin => 5 do
+                    @vid = video url
+                  end
+                
+                  para "controls: ",
+                    link("play")  { @vid.play }, ", ",
+                    link("pause") { @vid.pause }, ", ",
+                    link("stop")  { @vid.stop }, ", ",
+                    link("-5 sec") { @vid.time -= 5000 }, ", ",
+                    link("+5 sec") { @vid.time += 5000 }, ", ",
+                    link("done") { @vid.stop; close }
+                  
+                  @status = para "status: "
+                  #every( 1 ) do |count|
+                  #  if( @vid.length.nil? )
+                  #    @status.text "status: loading#{'.' * ( count % 3 ) }" 
+                  #  else
+                  #    @status.text "status: #{@vid.time / 1000} / #{@vid.length / 1000}"
+                  #  end
+                  #end
+                end
+              end
+            )
           end
-        )
-        caption link( 'Medium', :click => Proc.new do
-            @box.clear
-            @box.append{ image photo.medium_url, :center => true }
-          end
-        )
-        caption link( 'Large', :click => Proc.new do
-            @box.clear
-            @box.append{ image photo.large_url, :center => true }
-          end
-        )
+        end
+        
       end
       
-      @box = stack :margin => 5, :center => true do
+      @box = stack :margin => 5, :margin_right => gutter + 5 do
         background white, :curve => 10, :center => true
-        image photo.small_url, :margin => 3, :center => true
+        image photo.small_url, :margin => 5, :center => true
       end
     end # pic click
   end
