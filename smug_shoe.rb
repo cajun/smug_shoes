@@ -1,4 +1,5 @@
 Shoes.setup do
+  sources = [ 'http://gems.rubyforge.org/', 'http://gems.github.com' ]
   gem 'cajun-smile'
 end
 
@@ -17,25 +18,11 @@ class SmugShooe < Shoes
       fetch_albums
     end
     
-    @albums = flow{}
-    @photos = flow{}
-  end
-  
-  def fetch_albums
-    hash = {}
+    @albums = stack :margin => 10, :margin_right => 10 + gutter
     
-    @smug.albums( :NickName => @nick.text, :Heavy => 1 ).each do |album|
-      hash[album.title] = album
-    end
-    
-    @albums.clear
-    @photos.clear
-    
-    @albums.append do
-      para 'Albums'
-      @albums_list = list_box :items => [ "Pick One" ] + hash.keys do |album_text|
-        display_album( hash[album_text.text] )
-      end
+    @album_display = flow do
+      @photos = stack :width => 200, :height => 600, :margin => 5, :margin_right => 5 + gutter, :scroll => true
+      @photo_vid = stack :width => -200, :margin => 5, :margin_right => 5 + gutter
     end
   end
   
@@ -46,34 +33,55 @@ class SmugShooe < Shoes
   def box_background
     background white, :curve => 10
   end
-
-  def display_album( album )
+  
+  def fetch_albums
+    @albums.clear
     @photos.clear
-    @photos.append do
-      stack :margin => 10, :margin_right => 10 + gutter do
-        box_background
-        title album.title, :align => 'center'
-        para snippet( album.description, 50 ), :align => 'center'
-        inscription "Pic Count: #{album.image_count}", :align => 'center'
-      end
-      
-      flow :margin => 10, :margin_right => 10 + gutter do
-        box_background
-        display_photos( album ) if( album.image_count.to_i > 1 )
+    
+    @albums.append do
+      @smug.albums( :NickName => @nick.text, :Heavy => 1 ).each do |album|
+        if( album.image_count.to_i > 1 )
+          flow :margin => 5 do
+            box_background
+            first_photo = album.photos.first.thumb_url
+          
+            if( first_photo )
+              stack :width => 200 do
+                pic = show_image first_photo, :margin => 6
+                pic.click do |button, left, top|
+                  @albums.clear
+                  display_photos( album )
+                end
+              end
+            
+              stack :width => -200 do
+                subtitle album.title
+                para snippet( album.description, 50 )
+                inscription "Pic Count: #{album.image_count}"
+              end
+            end # if first
+          end # if > 1
+        end
       end
     end
   end
 
+
   def display_photos( album )
-    flow :margin => 5 do
+    @photos.clear
+    @photo_vid.clear
+    
+    @photos.append do
       album.photos.each do |photo|
         pic = show_image photo.thumb_url, :margin => 3, :center => true
 
         pic.click do |button, left, top|
           photo_and_vid_details( album, photo )
-        end 
+        end
       end
     end
+    @photos.scroll = true
+    photo_and_vid_details( album, album.photos.first )
   end
   
   def show_image( photo_url, options )
@@ -90,8 +98,8 @@ class SmugShooe < Shoes
 
   def photo_and_vid_details( album, photo )
     
-    @photos.clear
-    @photos.append do
+    @photo_vid.clear
+    @photo_vid.append do
       stack :margin => 10, :margin_right => 10 + gutter do
         box_background
         para( link( album.title ) {
@@ -168,5 +176,5 @@ class SmugShooe < Shoes
 end
 
 
-Shoes.app :title => 'Smug Shooe', :width => 800, :height => 800, :resizeable => false
+Shoes.app :title => 'Smug Shooe', :width => 800, :height => 610, :resizeable => false
  
