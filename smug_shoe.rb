@@ -7,27 +7,28 @@ require 'smile'
 
 class SmugShooe < Shoes
   url '/', :index
+  url '/albums', :albums
+  url '/photos/(\w+)', :photos
+  url '/photo_and_vid_details/(\w+),(\w+)'
   
   def index
     @smug = Smile::Smug.new
     @smug.auth_anonymously
+    background black
     
-    para 'Nick Name ( e.g. kleinpeter )'
+    para 'Nick Name ( e.g. kleinpeter )', :stroke => white
     @nick = edit_line :text => 'vincentlaforet'
     button 'get albums' do
       fetch_albums
     end
     
     @albums = stack :margin => 10, :margin_right => 10 + gutter
-    
     @album_display = flow do
-      @photos = stack :width => 200, :height => 600, :margin => 5, :margin_right => 5 + gutter, :scroll => true
-      @photo_vid = stack :width => -200, :margin => 5, :margin_right => 5 + gutter
+      @photo_vid = stack :margin => 5, :margin_right => 200 + gutter, :attach => Window, 
+        :top => 25, :left => 200
+      @photos = stack :width => -600, :margin => 5, :margin_right => 5 + gutter, :top => 20,
+        :attach => self, :top => 20
     end
-  end
-  
-  def default_background
-    background gradient slategray, gray
   end
   
   def box_background
@@ -35,6 +36,8 @@ class SmugShooe < Shoes
   end
   
   def fetch_albums
+    @vid.stop if( @vid )
+    @photo_vid.clear
     @albums.clear
     @photos.clear
     
@@ -88,7 +91,7 @@ class SmugShooe < Shoes
     if( photo_url )
       image photo_url, options
     else
-      para "No Image"
+      para "No Image", :stroke => white
     end
   end
   
@@ -102,12 +105,16 @@ class SmugShooe < Shoes
     @photo_vid.append do
       stack :margin => 10, :margin_right => 10 + gutter do
         box_background
-        para( link( album.title ) {
-          @vid.stop if( @vid )
-          display_album( album ) 
-        }, :align => 'center' )
+        para( 
+          link( "View #{album.title} at SmugMug", :click => photo.album_url ), 
+          :align => 'center' 
+        )
         para "Last Updated: #{photo.last_updated}", :align => 'center'
         para "Caption: #{snippet( photo.caption )}", :align => 'center'
+        para( 
+          link( 'Back to Albums' ) { fetch_albums }, 
+          :align => 'center'
+        )
       end
       
       flow :margin => 10, :margin_right => 10 + gutter do
@@ -140,7 +147,7 @@ class SmugShooe < Shoes
                   box_background
                   stack :margin => 5 do
                     @vid.stop if( @vid )
-                    @vid = video url
+                    @vid = video url, :autoplay => true
                   end
                 
                   every( 1 ) do |count|
@@ -176,5 +183,5 @@ class SmugShooe < Shoes
 end
 
 
-Shoes.app :title => 'Smug Shooe', :width => 800, :height => 610, :resizeable => false
+Shoes.app :title => 'Smug Shooe', :width => 800, :height => 650
  
