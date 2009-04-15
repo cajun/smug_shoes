@@ -1,25 +1,25 @@
 class Images < Shoooes
   url '/images/(\d+)', :index
-  attr_accessor :current_size
+  url '/render_image/(\d+)', :render_image
+  attr_accessor :current_size, :images, :album
   
   def index( album_number )
     header
     @current_size = 'small_url'
-    album = @session.albums[album_number.to_i]
-
+    @album = @session.albums[album_number.to_i]
+    @images = @album.photos
+    
     @photo_vid = stack :margin_right => 200 + gutter, :attach => Window, :top => 5, :left => 200
       
     @photos = stack :width => -600, :margin => 5, :margin_right => 5 + gutter, :attach => self, :top => @header_height do
-      album.photos.each do |photo|
+      @images.each_with_index do |photo, index|
         pic = show_image photo.thumb_url, :margin => 3, :center => true
 
-        pic.click do |button, left, top|
-          photo_and_vid_details( album, photo )
-        end
+        pic.click { render_image( index ) }
       end
     end
 
-    photo_and_vid_details( album, album.photos.first )
+    render_image( 1 )
   end
    
   def on_home_click
@@ -76,13 +76,15 @@ class Images < Shoooes
     end
   end
   
-  def photo_and_vid_details( album, photo )
+  def render_image( index )
+    photo = @images[index.to_i]
+    
     @photo_vid.clear
     @photo_vid.append do
       stack :top => @header_height, :margin => 2, :margin_right => 2 + gutter do
         box_background
         inscription( 
-          link( "View #{album.title} at SmugMug", :click => photo.album_url ), 
+          link( "View #{@album.title} at SmugMug", :click => photo.album_url ), 
           :align => 'center' 
         )
         inscription em "Last Updated: #{photo.last_updated}", :align => 'center'
@@ -99,7 +101,6 @@ class Images < Shoooes
 
         @details = stack :margin => 5, :margin_right => gutter + 5 do
           background white, :curve => 10, :center => true
-          debug @current_size
           image photo.send( "#{@current_size}".to_sym ), :margin => 5, :center => true
         end
 
