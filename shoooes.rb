@@ -28,7 +28,11 @@ class Shoooes < Shoes
   end
   
   def box_background
-    background white, :curve => 10
+    background gradient white, gray , :curve => 10
+  end
+  
+  def box_reverse_background
+    background gradient gray, white , :curve => 10
   end
 
   def unescapeHTML( text )
@@ -40,14 +44,16 @@ class Shoooes < Shoes
   end
   
   def parse_links( text )
-    return unless text 
-    text.gsub( /\<a.+\>.+\<\/a\>/ ) do |html_link|
-      debug html_link
-      /\<a href=["|'](.+)["|'] .+\>(.+)\<\/a\>/.match html_link
-      debug $1
-      debug $2
-      link( $2, :click => $1 )
-    end
+    #return unless text
+    #builder = []
+    #text.gsub( /\<a.+\>.+\<\/a\>/ ) do |html_link|
+    #  
+    #  /\<a href=["|'](.+)["|'] .+\>(.+)\<\/a\>/.match html_link
+    #  
+    #  link( $2, :click => $1 )
+    #  
+    #  html_link
+    #end
   end
   
   def show_image( photo_url, options )

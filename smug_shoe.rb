@@ -1,7 +1,7 @@
-Shoes.setup { source 'http://gems.github.com' }
-
 Shoes.setup do
-  gem 'cajun-smile'
+  gem 'activesupport'
+  gem 'rest-client'
+  gem 'smile'
 end
 
 require 'smile'

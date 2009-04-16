@@ -2,6 +2,7 @@ class Session
   include Singleton
   
   attr_accessor :smug, :albums
+  attr_accessor :album, :images, :current_size
   def init
     @smug = Smile::Smug.new
     @smug.auth_anonymously
@@ -12,7 +13,8 @@ class Session
     @smug
   end
   
-  def albums=( value )
-    @albums = value
+  def album=( index )
+    @album = @albums[index]
+    @images = @album.photos
   end
 end

@@ -4,28 +4,32 @@ class Images < Shoooes
   attr_accessor :current_size, :images, :album
   
   def index( album_number )
+    setup( album_number.to_i )
+  end
+  
+  def setup( album_number=nil )
     header
-    @current_size = 'small_url'
-    @album = @session.albums[album_number.to_i]
-    @images = @album.photos
-    
-    @photo_vid = stack :margin_right => 200 + gutter, :attach => Window, :top => 5, :left => 200
-      
-    @photos = stack :width => -600, :margin => 5, :margin_right => 5 + gutter, :attach => self, :top => @header_height do
-      @images.each_with_index do |photo, index|
-        pic = show_image photo.thumb_url, :margin => 3, :center => true
+    @session.current_size ||= 'small_url'
+    if( album_number )
+      @session.album = album_number  if( album_number )
 
-        pic.click { render_image( index ) }
-      end
+      render_image( 1 )
     end
-
-    render_image( 1 )
   end
    
   def on_home_click
     @vid.stop if( @vid )
   end
 
+  def photo_stack
+    stack :width => -600, :margin => 5, :margin_right => 5 + gutter, :attach => self, :top => @header_height do
+      @session.images.each_with_index do |photo, index|
+        pic = show_image photo.thumb_url, :margin => 3, :center => true
+
+        pic.click { visit "/render_image/#{index}" }
+      end
+    end
+  end
    
   def photo_details( photo )
     flow do
@@ -42,7 +46,7 @@ class Images < Shoooes
       @controls.hide if( @controls )
       @status.hide if( @status )
       @details.clear
-      @current_size = size
+      @session.current_size = size
       
       @details.append do
         box_background
@@ -69,22 +73,24 @@ class Images < Shoooes
       
       @details.append do
         box_background
-        stack :margin => 5 do
-          @vid = video url, :autoplay => true
+        stack :margin => 5, :margin_left => 100 do
+          @vid = video url, :autoplay => true, :center => true
         end
       end
     end
   end
   
   def render_image( index )
-    photo = @images[index.to_i]
+    setup
+    photo_stack
+    photo = @session.images[index.to_i]
     
-    @photo_vid.clear
-    @photo_vid.append do
+    
+    stack :margin_right => 200 + gutter, :attach => Window, :top => 5, :left => 200 do
       stack :top => @header_height, :margin => 2, :margin_right => 2 + gutter do
         box_background
         inscription( 
-          link( "View #{@album.title} at SmugMug", :click => photo.album_url ), 
+          link( "View #{@session.album.title} at SmugMug", :click => photo.album_url ), 
           :align => 'center' 
         )
         inscription em "Last Updated: #{photo.last_updated}", :align => 'center'
@@ -100,8 +106,8 @@ class Images < Shoooes
 
 
         @details = stack :margin => 5, :margin_right => gutter + 5 do
-          background white, :curve => 10, :center => true
-          image photo.send( "#{@current_size}".to_sym ), :margin => 5, :center => true
+          box_reverse_background
+          image photo.send( "#{@session.current_size}".to_sym ), :margin => 5, :center => true
         end
 
         @controls = para "controls: ",
